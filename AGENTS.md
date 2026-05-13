@@ -24,16 +24,28 @@ docker network create app
 
 Tickers on B3 must append `.SA` (e.g., `PETR4.SA`, `MXRF11.SA`).
 
+## Ticker input validation
+
+- Symbols are normalized with `strip().upper()`.
+- Valid format: up to 16 chars, only `[A-Z0-9.-]`.
+- Invalid format returns `400` with code `INVALID_INPUT`.
+
 ## Architecture
 
 - `main.py` — FastAPI app, includes `controllers/ticker_controller.py` router
 - `controllers/` — FastAPI route handlers
-- `services/` — Business logic + `ServiceException` hierarchy (`NotFoundException`, `InvalidInputException`)
+- `services/` — Business logic + `ServiceException` hierarchy (`NotFoundException`, `InvalidInputException`, `ServiceUnavailableException`)
 - `services/rate_limit.py` — Rate limiter using slowapi (30 requests/minute per IP)
+
+## Error behavior
+
+- Unknown ticker / empty upstream payload: `404` with code `NOT_FOUND`
+- Invalid ticker format: `400` with code `INVALID_INPUT`
+- Upstream provider/network failure: `503` with code `SERVICE_UNAVAILABLE`
 
 ## Testing
 
-Tests use `pytest` with `httpx` for FastAPI's `TestClient`. All tests are in `tests/` and mock `yfinance` calls.
+Tests use `pytest` with `httpx` for FastAPI's `TestClient`. Keep tests deterministic and offline by mocking `yfinance` calls (no external network dependency).
 
 ```bash
 # Run all tests

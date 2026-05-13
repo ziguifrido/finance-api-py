@@ -4,7 +4,8 @@ This is a simple API built with Python and FastAPI to query detailed information
 ## Features
 * Get data from any ticker through a GET request.
 * Returns a complete JSON with the information provided by the .info() function of yfinance.
-* Error handling for unfound or invalid tickers.
+* Input validation for ticker symbols (`[A-Z0-9.-]`, max 16 chars, normalized with `strip().upper()`).
+* Error handling for not found, invalid input, and upstream provider failures.
 * Rate limiting: 30 requests per minute per IP to prevent abuse.
 
 ## How to Run the Project
@@ -93,10 +94,10 @@ Verify code with linting, type checking, and tests:
 ruff check . && ruff format --check .
 
 # Type check
-mypy main.py controllers/ticker_controller.py services/ticker_service.py services/service_exception.py
+mypy main.py controllers/ticker_controller.py services/ticker_service.py services/service_exception.py services/rate_limit.py
 
 # Full verification
-ruff check . && ruff format --check . && mypy main.py controllers/ticker_controller.py services/ticker_service.py services/service_exception.py && pytest tests/
+ruff check . && ruff format --check . && mypy main.py controllers/ticker_controller.py services/ticker_service.py services/service_exception.py services/rate_limit.py && pytest tests/
 ```
 
 ## Rate Limiting
@@ -125,6 +126,28 @@ To get information about Petrobras (PETR4), make a GET request to the following 
 http://127.0.0.1:8000/ticker/PETR4.SA
 
 > Important: Remember to add the .SA suffix for assets traded on the São Paulo stock exchange (B3).
+
+### Input Validation
+
+Symbols are accepted only when they match:
+
+- Allowed characters: letters, numbers, dot (`.`), and hyphen (`-`)
+- Max length: 16 characters
+- Input is normalized with `strip().upper()`
+
+Invalid symbols return:
+
+```json
+{
+    "message": "Invalid ticker symbol format. Use up to 16 characters from letters, numbers, dot, and hyphen.",
+    "code": "INVALID_INPUT"
+}
+```
+
+### Error Responses
+
+- `404 NOT_FOUND`: ticker not found or no information available
+- `503 SERVICE_UNAVAILABLE`: upstream provider/network error while fetching data
 
 ### Ticker Examples:
 

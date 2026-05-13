@@ -2,7 +2,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from services.service_exception import NotFoundException
+from services.service_exception import (
+    InvalidInputException,
+    NotFoundException,
+    ServiceUnavailableException,
+)
 from services.ticker_service import TickerService
 
 
@@ -41,3 +45,18 @@ class TestTickerService:
             service = TickerService()
             result = service.get_ticker_info("AAPL")
             assert result["symbol"] == "PETR4.SA"
+
+    def test_get_ticker_info_invalid_symbol(self):
+        service = TickerService()
+        with pytest.raises(InvalidInputException) as exc_info:
+            service.get_ticker_info("AAPL$")
+        assert exc_info.value.status_code == 400
+
+    def test_get_ticker_info_upstream_error(self):
+        with patch(
+            "services.ticker_service.yf.Ticker", side_effect=RuntimeError("timeout")
+        ):
+            service = TickerService()
+            with pytest.raises(ServiceUnavailableException) as exc_info:
+                service.get_ticker_info("AAPL")
+            assert exc_info.value.status_code == 503

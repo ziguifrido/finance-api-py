@@ -4,6 +4,7 @@ from services.service_exception import (
     InvalidInputException,
     NotFoundException,
     ServiceException,
+    ServiceUnavailableException,
 )
 
 
@@ -54,3 +55,17 @@ class TestInvalidInputException:
         assert exc.status_code == status.HTTP_400_BAD_REQUEST
         assert exc.detail == "Invalid symbol format"
         assert exc.error_code == "INVALID_INPUT"
+
+
+class TestServiceUnavailableException:
+    def test_service_unavailable_exception_default_values(self):
+        exc = ServiceUnavailableException()
+        assert exc.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert exc.detail == "Upstream service unavailable"
+        assert exc.error_code == "SERVICE_UNAVAILABLE"
+
+    def test_service_unavailable_exception_custom_detail(self):
+        exc = ServiceUnavailableException(detail="Provider timed out")
+        assert exc.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert exc.detail == "Provider timed out"
+        assert exc.error_code == "SERVICE_UNAVAILABLE"

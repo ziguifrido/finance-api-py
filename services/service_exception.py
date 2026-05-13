@@ -23,3 +23,12 @@ class InvalidInputException(ServiceException):
             detail=detail,
             error_code="INVALID_INPUT",
         )
+
+
+class ServiceUnavailableException(ServiceException):
+    def __init__(self, detail: str = "Upstream service unavailable"):
+        super().__init__(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=detail,
+            error_code="SERVICE_UNAVAILABLE",
+        )

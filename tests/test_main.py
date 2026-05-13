@@ -15,8 +15,12 @@ class TestMainApp:
             assert data["code"] == "NOT_FOUND"
 
     def test_app_includes_ticker_router(self, client):
-        response = client.get("/ticker/AAPL")
-        assert response.status_code in [200, 404]
+        with patch("services.ticker_service.yf.Ticker") as mock_ticker_class:
+            mock_ticker = mock_ticker_class.return_value
+            mock_ticker.info = {"symbol": "AAPL", "shortName": "Apple"}
+            response = client.get("/ticker/AAPL")
+            assert response.status_code == 200
+            assert response.json()["symbol"] == "AAPL"
 
     def test_exception_response_format(self, client):
         mock_ticker = MagicMock()

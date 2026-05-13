@@ -31,3 +31,16 @@ class TestTickerController:
         with patch("services.ticker_service.yf.Ticker", return_value=mock_ticker):
             response = client.get("/ticker/AAPL")
             assert response.status_code == 200
+
+    def test_get_ticker_info_invalid_symbol(self, client):
+        response = client.get("/ticker/AAPL$")
+        assert response.status_code == 400
+        assert response.json()["code"] == "INVALID_INPUT"
+
+    def test_get_ticker_info_upstream_error(self, client):
+        with patch(
+            "services.ticker_service.yf.Ticker", side_effect=RuntimeError("timeout")
+        ):
+            response = client.get("/ticker/AAPL")
+            assert response.status_code == 503
+            assert response.json()["code"] == "SERVICE_UNAVAILABLE"
